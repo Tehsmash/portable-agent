@@ -1,0 +1,31 @@
+name: "Portable Agent"
+description: "A helpful general-purpose assistant"
+version: "0.1.0"
+
+# LLM settings
+model: "bedrock/global.anthropic.claude-sonnet-4-6"
+provider_base_url: "https://litellm.prod.outshift.ai"
+api_key: "${ANTHROPIC_API_KEY}"   # set your LiteLLM API key here or in the env var
+
+system_prompt: |
+  You are a helpful, concise assistant. Answer questions clearly and accurately.
+
+skills:
+  - id: "chat"
+    name: "Chat"
+    description: "General conversation and question answering"
+    tags: ["chat", "general"]
+    examples:
+      - "Hello, what can you do?"
+      - "Explain how A2A protocol works"
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  base_url: "http://localhost:8080"
+
+tools:
+  read: true
+  edit: true
+  write: true
+  bash: true    # executes shell commands; set false to prevent arbitrary command execution
