@@ -29,3 +29,7 @@ tools:
   edit: true
   write: true
   bash: true    # executes shell commands; set false to prevent arbitrary command execution
+
+# skills_dirs:           # override default discovery paths
+#   - ".agents/skills"   # project-level
+#   - "~/.agents/skills" # user-level

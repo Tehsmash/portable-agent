@@ -29,6 +29,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Discover AgentSkills and append catalog to system prompt.
+	skills := DiscoverSkills(cfg.SkillsDirs)
+	if len(skills) > 0 {
+		logger.Info("skills discovered", "count", len(skills))
+		catalog := BuildSkillsCatalog(skills)
+		cfg.SystemPrompt = cfg.SystemPrompt + "\n\n" + catalog + `
+
+When a task matches one of the available skills, use the read tool to load the full instructions from the skill's <location> before proceeding.`
+	} else {
+		logger.Info("no skills found")
+	}
+
 	// Build tool registry.
 	registry := NewRegistry()
 	if cfg.Tools.Read {

@@ -17,6 +17,7 @@ type Config struct {
 	APIKey          string        `yaml:"api_key"`
 	ProviderBaseURL string        `yaml:"provider_base_url"` // optional; overrides the default Anthropic API endpoint
 	Skills       []SkillConfig `yaml:"skills"`
+	SkillsDirs   []string      `yaml:"skills_dirs"`
 	Server       ServerConfig  `yaml:"server"`
 	Tools        ToolsConfig   `yaml:"tools"`
 }
@@ -81,6 +82,16 @@ func loadConfig(path string) (*Config, error) {
 	// API key: config file takes precedence, then environment variable.
 	if cfg.APIKey == "" {
 		cfg.APIKey = os.Getenv("ANTHROPIC_API_KEY")
+	}
+
+	// AgentSkills discovery paths: project-level dirs first so they take precedence.
+	if len(cfg.SkillsDirs) == 0 {
+		cfg.SkillsDirs = []string{
+			".agents/skills",   // project-level (cross-client)
+			".claude/skills",   // project-level (Claude Code compat)
+			"~/.agents/skills", // user-level (cross-client)
+			"~/.claude/skills", // user-level (Claude Code compat)
+		}
 	}
 
 	return &cfg, nil
