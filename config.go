@@ -16,10 +16,22 @@ type Config struct {
 	Model           string        `yaml:"model"`
 	APIKey          string        `yaml:"api_key"`
 	ProviderBaseURL string        `yaml:"provider_base_url"` // optional; overrides the default Anthropic API endpoint
-	Skills       []SkillConfig `yaml:"skills"`
-	SkillsDirs   []string      `yaml:"skills_dirs"`
-	Server       ServerConfig  `yaml:"server"`
-	Tools        ToolsConfig   `yaml:"tools"`
+	Skills       []SkillConfig    `yaml:"skills"`
+	SkillsDirs   []string         `yaml:"skills_dirs"`
+	Server       ServerConfig     `yaml:"server"`
+	Tools        ToolsConfig      `yaml:"tools"`
+	LocalModel   LocalModelConfig `yaml:"local_model"`
+}
+
+// LocalModelConfig configures a local GGUF model run via llama.cpp/yzma.
+type LocalModelConfig struct {
+	Path        string  `yaml:"path"`         // path to GGUF file (required)
+	LibDir      string  `yaml:"lib_dir"`      // dir with llama.cpp shared libs; falls back to $YZMA_LIB
+	ContextSize uint32  `yaml:"context_size"` // KV context window (default 4096)
+	GPULayers   int32   `yaml:"gpu_layers"`   // layers offloaded to GPU (default 0 = CPU-only)
+	Threads     int32   `yaml:"threads"`      // CPU threads (default 0 = auto)
+	MaxTokens   int     `yaml:"max_tokens"`   // max tokens to generate per call (default 1024)
+	Temperature float32 `yaml:"temperature"`  // sampling temperature (default 0.7)
 }
 
 // SkillConfig describes a single agent skill exposed via the A2A agent card.
@@ -82,6 +94,20 @@ func loadConfig(path string) (*Config, error) {
 	// API key: config file takes precedence, then environment variable.
 	if cfg.APIKey == "" {
 		cfg.APIKey = os.Getenv("ANTHROPIC_API_KEY")
+	}
+
+	// LocalModel defaults.
+	if cfg.LocalModel.ContextSize == 0 {
+		cfg.LocalModel.ContextSize = 4096
+	}
+	if cfg.LocalModel.MaxTokens == 0 {
+		cfg.LocalModel.MaxTokens = 1024
+	}
+	if cfg.LocalModel.Temperature == 0 {
+		cfg.LocalModel.Temperature = 0.7
+	}
+	if cfg.LocalModel.LibDir == "" {
+		cfg.LocalModel.LibDir = os.Getenv("YZMA_LIB")
 	}
 
 	// AgentSkills discovery paths: project-level dirs first so they take precedence.

@@ -24,11 +24,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if cfg.APIKey == "" {
-		logger.Error("no API key: set ANTHROPIC_API_KEY or api_key in config")
-		os.Exit(1)
-	}
-
 	// Discover AgentSkills and append catalog to system prompt.
 	skills := DiscoverSkills(cfg.SkillsDirs)
 	if len(skills) > 0 {
@@ -69,7 +64,23 @@ When a task matches one of the available skills, use the read tool to load the f
 	}
 
 	// Build provider.
-	provider := NewAnthropicProvider(cfg.APIKey, cfg.Model, cfg.ProviderBaseURL)
+	var provider Provider
+	if cfg.LocalModel.Path != "" {
+		lp, err := NewLocalProvider(cfg.LocalModel)
+		if err != nil {
+			logger.Error("failed to load local model", "path", cfg.LocalModel.Path, "err", err)
+			os.Exit(1)
+		}
+		defer lp.Close()
+		provider = lp
+		logger.Info("using local model", "path", cfg.LocalModel.Path)
+	} else {
+		if cfg.APIKey == "" {
+			logger.Error("no API key: set ANTHROPIC_API_KEY or api_key in config")
+			os.Exit(1)
+		}
+		provider = NewAnthropicProvider(cfg.APIKey, cfg.Model, cfg.ProviderBaseURL)
+	}
 
 	// Build A2A agent card.
 	agentCard := buildAgentCard(cfg)
